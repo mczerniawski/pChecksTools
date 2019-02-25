@@ -1,2 +1,5 @@
-# pChecksTools
-Shared tools for Pester infrastructure checks for various pChecks modules
+# What is pChecksTools
+
+Shared tools for other baseline modules used to create infra-as-code documentation
+
+Authored by 
