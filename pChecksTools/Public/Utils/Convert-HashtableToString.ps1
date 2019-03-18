@@ -1,5 +1,4 @@
 function Convert-HashtableToString {
-
     <#
     .SYNOPSIS
     Converts hashtable or any other dictionary to a serializable string. It also supports nested hashtables.
@@ -9,7 +8,6 @@ function Convert-HashtableToString {
 
         @{'key'='value'; 'keyNested'=@{'a'='b'; }; }
     #>
-
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -18,10 +16,6 @@ function Convert-HashtableToString {
         [System.Collections.IDictionary]
         $Hashtable
     )
-
-    begin {
-    }
-
     process {
         $sb = New-Object -TypeName System.Text.StringBuilder
         [void]($sb.Append('@{'))
@@ -41,10 +35,6 @@ function Convert-HashtableToString {
             [void]($sb.Append("$key=$value; "))
         }
         [void]($sb.Append('}'))
-
         return $sb.ToString()
-    }
-
-    end {
     }
 }

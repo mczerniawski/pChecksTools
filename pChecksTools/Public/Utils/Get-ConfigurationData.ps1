@@ -30,7 +30,6 @@ function Get-ConfigurationData {
       .OUTPUTS
       Outputs a hashtable of key/value pair or PSObject.
   #>
-
   [CmdletBinding()]
   param (
     [Parameter(Mandatory, HelpMessage = 'Provide path for configuration file to read', Position = 0 )]
@@ -41,23 +40,34 @@ function Get-ConfigurationData {
     [Parameter(Mandatory = $false, HelpMessage = 'Select output type',Position = 1)]
     [ValidateSet('PSObject','HashTable')]
     [string]
-    $OutputType='HashTable'
+    $OutputType='HashTable',
+
+    [Parameter(Mandatory = $false, HelpMessage = 'Search recursively',Position = 2)]
+    [switch]
+    $Recurse
 
   )
   begin {
-    $includeParams =  '*.psd1','*.json'
+    $queryParams = @{
+      Include =  '*.psd1','*.json'
+    }
+    if($PSBoundParameters.ContainsKey('Recurse')){
+      $queryParams.Recurse = $true
+    }
+
   }
   process{
     foreach ($path in $ConfigurationPath) {
       #-include only supported if -path to folder includes \* at the end
       #check if given $ConfigurationPath is a directory
       $pathType = Get-Item -Path $path
+      $configurationFile=@()
       switch($pathType.PSIsContainer) {
         $true {
-          $configurationFile = Get-ChildItem -Path "$($path)\*" -Include $includeParams
+          $configurationFile += Get-ChildItem -Path "$($path)\*" @queryParams | Select-Object -ExpandProperty FullName
         }
         $false {
-          $configurationFile = Get-ChildItem -path $ConfigurationPath -Include $includeParams
+          $configurationFile = Get-ChildItem -path $ConfigurationPath -Include $queryParams.Include | Select-Object -ExpandProperty FullName
         }
       }
       foreach ($file in $configurationFile) {
@@ -75,7 +85,6 @@ function Get-ConfigurationData {
             }
           }
           {$PSItem -match '.psd1'} {
-            Write-Verbose -Message "Reading configuration file from {$PSItem}"
             Import-LocalizedData -BaseDirectory (Split-Path $file -Parent) -FileName (Split-Path $file -Leaf)
           }
         }

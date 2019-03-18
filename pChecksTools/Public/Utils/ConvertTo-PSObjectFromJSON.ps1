@@ -20,9 +20,6 @@ function ConvertTo-PSObjectFromJSON {
       .OUTPUTS
       Custom PS Object.
   #>
-
-
-
     [CmdletBinding()]
     [OutputType([PSObject])]
     param (
@@ -33,9 +30,7 @@ function ConvertTo-PSObjectFromJSON {
         [string]
         $Path
     )
-
     Process {
-        Write-Verbose -Message "Reading configuration file from {$Path}"
         $content = Get-Content -LiteralPath $path -ReadCount 0 -Raw | Out-String
         $pscustomObject = ConvertFrom-Json -InputObject $content
         $pscustomObject

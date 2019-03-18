@@ -17,14 +17,14 @@ function Export-BaselineConfiguration {
         #endregion
         #region Generate files
         #region non-node configuration
-        $nonNodefileName = ('{0}.Configuration.json' -f $BaselineConfiguration.NonNodeData.Name)
-        $forestConfigFile = [System.IO.Path]::Combine("$BaselineConfigurationFolder", "NonNodeData", "$nonNodefileName")
-        $BaselineConfiguration.NonNodeData | ConvertTo-Json -Depth 99 | Out-File -FilePath $forestConfigFile
+        $GeneralfileName = ('{0}.Configuration.json' -f $BaselineConfiguration.General.Name)
+        $forestConfigFile = [System.IO.Path]::Combine("$BaselineConfigurationFolder", "General", "$GeneralfileName")
+        $BaselineConfiguration.General | ConvertTo-Json -Depth 99 | Out-File -FilePath $forestConfigFile
         #endregion
         #region node-configuration
-        foreach ($nodeConfig in $BaselineConfiguration.AllNodes) {
+        foreach ($nodeConfig in $BaselineConfiguration.Nodes) {
             $nodeFileName = ('{0}.Configuration.json' -f $nodeConfig.ComputerName)
-            $nodeFile = [System.IO.Path]::Combine("$BaselineConfigurationFolder", "AllNodes", "$nodeFileName")
+            $nodeFile = [System.IO.Path]::Combine("$BaselineConfigurationFolder", "Nodes", "$nodeFileName")
             $nodeConfig | ConvertTo-Json -Depth 99 | Out-File -FilePath $nodeFile
         }
         #endregion

@@ -10,13 +10,13 @@ function New-BaselineFolderStructure {
     if (-not (Test-Path $BaselineConfigurationFolder)) {
         [void](New-Item -Path $BaselineConfigurationFolder -ItemType Directory)
     }
-    $nonNodeDataPath = (Join-Path -Path $BaselineConfigurationFolder -childPath 'NonNodeData')
-    $allNodesDataPath = (Join-Path -Path $BaselineConfigurationFolder -childPath 'AllNodes')
+    $GeneralPath = (Join-Path -Path $BaselineConfigurationFolder -childPath 'General')
+    $NodesDataPath = (Join-Path -Path $BaselineConfigurationFolder -childPath 'Nodes')
 
-    if (-not (Test-Path $nonNodeDataPath)) {
-        [void](New-Item -Path $nonNodeDataPath -ItemType Directory)
+    if (-not (Test-Path $GeneralPath)) {
+        [void](New-Item -Path $GeneralPath -ItemType Directory)
     }
-    if (-not (Test-Path $allNodesDataPath)) {
-        [void](New-Item -Path $allNodesDataPath -ItemType Directory)
+    if (-not (Test-Path $NodesDataPath)) {
+        [void](New-Item -Path $NodesDataPath -ItemType Directory)
     }
 }

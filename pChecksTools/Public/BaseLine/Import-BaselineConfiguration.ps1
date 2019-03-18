@@ -2,23 +2,23 @@ function Import-BaselineConfiguration {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [System.String]
         [ValidateScript( {Test-Path -Path $PSItem -PathType Container})]
+        [System.String]
         $BaselineConfigurationFolder
     )
     process {
 
         $BaselineConfiguration = @{
-            AllNodes    = @()
-            NonNodeData = @()
+            Nodes    = @()
+            General = @()
         }
 
         #region Get Service Configuration Data (i.e. your DHCP global configuration)
-        $BaselineConfiguration.NonNodeData = Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'NonNodeData') -OutputType HashTable
+        $BaselineConfiguration.General = Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'General') -OutputType HashTable
         #endregion
 
         #region Get Service Nodes Configuration Data (i.e. your DHCP servers specific configuration)
-        $BaselineConfiguration.AllNodes += Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'AllNodes') -OutputType HashTable
+        $BaselineConfiguration.Nodes += Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'Nodes') -OutputType HashTable
         #endregion
 
         $BaselineConfiguration

@@ -20,9 +20,6 @@
       .OUTPUTS
       Custom Hashtable.
   #>
-
-
-
     [CmdletBinding()]
     [OutputType([Hashtable])]
     param (
@@ -35,7 +32,6 @@
     )
 
     Process {
-        Write-Verbose -Message "Reading configuration file from {$Path}"
         $content = Get-Content -LiteralPath $path -ReadCount 0 -Raw | Out-String
         $pscustomObject = ConvertFrom-Json -InputObject $content
         $hashtable = ConvertTo-HashtableFromPsCustomObject -psCustomObject $pscustomObject
