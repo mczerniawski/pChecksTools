@@ -5,11 +5,11 @@ function Invoke-pCheck {
     (
         [Parameter(Mandatory, HelpMessage = 'Path to Checks Index File')]
         [System.String]
-        $pChecksIndexPath,
+        $pChecksIndexFilePath,
 
         [Parameter(Mandatory, HelpMessage = 'Folder with Pester tests')]
         [ValidateScript( {Test-Path -Path $_ -PathType Container})]
-        [System.String[]]
+        [System.String]
         $pChecksFolderPath,
 
         [Parameter(Mandatory = $false, HelpMessage = 'test type for Pester')]
@@ -96,7 +96,7 @@ function Invoke-pCheck {
         }
     }
     process {
-        $pCheckFromIndex = Get-pCheckFromIndex -pChecksIndexPath $pChecksIndexPath
+        $pCheckFromIndex = Get-pCheckFromIndex -pChecksIndexFilePath $pChecksIndexFilePath
         if ($pCheckFromIndex) {
             ForEach ($pCheck in $pCheckFromIndex) {
                 if ($pCheck.TestTarget -in @($TestTarget)) {
@@ -118,8 +118,8 @@ function Invoke-pCheck {
                         if ($checksToProcess) {
                             if($pCheckFiltered.TestTarget -eq 'General') {
                                 Write-Verbose 'bede robil generala'
-                                Invoke-pCheckFinal #reszta parametrow do Generala
-<#
+                                #Invoke-pCheckFinal #reszta parametrow do Generala
+
                                 foreach ($file in $checksToProcess) {
 
                                     $pesterParams.Script = @{
@@ -129,11 +129,11 @@ function Invoke-pCheck {
                                     #wygeneruj nazwe pliku,  wykonac test, zapisz
                                     Write-Verbose -Message "Pester File {$file} Processed type $($pCheckFiltered.TestTarget)"
                                 }
-                                #>
+
                             }
                             else {
                                 Write-Verbose 'bede robil noda'
-                                Invoke-pCheckFinal #reszta parametrow per node (jak sprawdzic ktore nody faktycznie sa nodami?)
+                                #Invoke-pCheckFinal #reszta parametrow per node (jak sprawdzic ktore nody faktycznie sa nodami?)
                                 foreach ($file in $checksToProcess) {
                                     $pesterParams.Script = @{
                                         Path       = $file

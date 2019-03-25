@@ -4,9 +4,9 @@ function Get-pCheckFromIndex {
     (
         [Parameter(Mandatory, HelpMessage = 'Path to Checks Index File')]
         [System.String]
-        $pChecksIndexPath
+        $pChecksIndexFilePath
     )
     process {
-        Get-ConfigurationData -ConfigurationPath $pChecksIndexPath -OutputType PSObject | Select-Object -ExpandProperty Checks
+        Get-ConfigurationData -ConfigurationPath $pChecksIndexFilePath -OutputType PSObject | Select-Object -ExpandProperty Checks
     }
 }
