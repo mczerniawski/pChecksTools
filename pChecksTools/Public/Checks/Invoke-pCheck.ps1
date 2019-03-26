@@ -17,6 +17,11 @@ function Invoke-pCheck {
         [string[]]
         $TestType = @('Simple', 'Comprehensive'),
 
+        [Parameter(Mandatory = $false, HelpMessage = 'Node to test')]
+        [ValidateNotNullOrEmpty()]
+        [string[]]
+        $NodeName,
+
         [Parameter(Mandatory = $false, HelpMessage = 'hashtable with Configuration',
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [hashtable]
@@ -60,7 +65,6 @@ function Invoke-pCheck {
 
         [Parameter(Mandatory = $false, HelpMessage = 'FileName for Pester test results',
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
-        [ValidateScript( {Test-Path $_ -Type Leaf -IsValid})]
         [String]
         $FilePrefix,
 
@@ -99,51 +103,125 @@ function Invoke-pCheck {
         $pCheckFromIndex = Get-pCheckFromIndex -pChecksIndexFilePath $pChecksIndexFilePath
         if ($pCheckFromIndex) {
             ForEach ($pCheck in $pCheckFromIndex) {
+                #region filters checks from INDEX file based in input
                 if ($pCheck.TestTarget -in @($TestTarget)) {
                     $getpCheckFilteredSplat = @{
                         pCheckObject = $pCheck
-                        TestType = $TestType
-                        TestTarget = $pCheck.TestTarget
+                        TestType     = $TestType
+                        TestTarget   = $pCheck.TestTarget
                     }
-                    if($PSBoundParameters.ContainsKey('Tag')) {
+                    if ($PSBoundParameters.ContainsKey('Tag')) {
                         $getpCheckFilteredSplat.Tag = $Tag
                     }
+                    #endregion
+                    #region Apply filtered checks from index to actual files on disk
                     $pCheckFiltered = Get-pCheckFiltered @getpCheckFilteredSplat
                     if ($pCheckFiltered) {
                         $getpCheckToProcessSplat = @{
-                            pCheckObject = $pCheckFiltered
+                            pCheckObject      = $pCheckFiltered
                             pChecksFolderPath = $pChecksFolderPath
                         }
                         $checksToProcess = Get-pCheckToProcess @getpCheckToProcessSplat
+                        #endregion
                         if ($checksToProcess) {
-                            if($pCheckFiltered.TestTarget -eq 'General') {
-                                Write-Verbose 'bede robil generala'
-                                #Invoke-pCheckFinal #reszta parametrow do Generala
+                            foreach ($file in $checksToProcess) {
+                                #region get output file pester parameters
 
-                                foreach ($file in $checksToProcess) {
-
-                                    $pesterParams.Script = @{
-                                        Path       = $file
-                                        Parameters = $pCheckParameters
-                                    }
-                                    #wygeneruj nazwe pliku,  wykonac test, zapisz
-                                    Write-Verbose -Message "Pester File {$file} Processed type $($pCheckFiltered.TestTarget)"
+                                $pesterParams.Script = @{
+                                    Path       = $file
+                                    Parameters = $pCheckParameters
                                 }
 
-                            }
-                            else {
-                                Write-Verbose 'bede robil noda'
-                                #Invoke-pCheckFinal #reszta parametrow per node (jak sprawdzic ktore nody faktycznie sa nodami?)
-                                foreach ($file in $checksToProcess) {
-                                    $pesterParams.Script = @{
-                                        Path       = $file
-                                        Parameters = $pCheckParameters
-                                    }
-                                    #wygeneruj nazwe pliku,  wykonac test, zapisz
-                                    Write-Verbose -Message "Pester File {$file} Processed type $($pCheckFiltered.TestTarget)"
-                                }
-                            }
 
+                                if ($PSBoundParameters.ContainsKey('OutputFolder')) {
+                                    $newpCheckFileNameSplat = @{
+                                        pCheckFile = $file
+                                    }
+                                    $newpCheckFileNameSplat.OutputFolder = $OutputFolder
+                                    if ($PSBoundParameters.ContainsKey('FilePrefix')) {
+                                        $newpCheckFileNameSplat.FilePrefix = $FilePrefix
+                                    }
+                                    if ($PSBoundParameters.ContainsKey('IncludeDate')) {
+                                        $newpCheckFileNameSplat.IncludeDate = $true
+                                    }
+                                    $pesterParams.OutputFormat = 'NUnitXml'
+                                }
+                                #endregion
+                                if ($pCheckFiltered.TestTarget -eq 'General') {
+                                    Write-Verbose "bede robil generala - {$file}"
+                                    $newpCheckFileNameSplat.NodeName = 'General'
+                                    $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
+                                    Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.FilePrefix)}"
+
+                                    #region Perform Tests
+                                    $invocationStartTime = [DateTime]::UtcNow
+                                    $pesterParams
+                                    #$pChecksResults = Invoke-Pester @pesterParams
+                                    $invocationEndTime = [DateTime]::UtcNow
+                                    #endregion
+                                    #wygeneruj nazwe pliku,  wykonac test, zapisz
+
+                                }
+                                else {
+                                    Write-Verbose "bede robil noda - {$file}"
+                                    if ($PSBoundParameters.ContainsKey('NodeName')) {
+                                        $nodeToProcess = $NodeName
+                                    }
+                                    else {
+                                        $nodeToProcess = 'WszystkieNody'
+                                    }
+                                    foreach ($node in $nodeToProcess) {
+                                        Write-Verbose "Dla Noda $node"
+                                        $newpCheckFileNameSplat.NodeName = $node
+                                        $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
+                                        $pCheckParametersTemporary = $pCheckParameters
+                                        $pCheckParametersTemporary.ComputerName = $node
+                                        $pesterParams.Script = @{
+                                            Path       = $file
+                                            Parameters = $pCheckParametersTemporary
+                                        }
+                                        Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.FilePrefix)}"
+
+                                        #region Perform Tests
+                                        $invocationStartTime = [DateTime]::UtcNow
+                                        $pesterParams
+                                        #$pChecksResults = Invoke-Pester @pesterParams
+                                        $invocationEndTime = [DateTime]::UtcNow
+                                        #endregion
+                                    }
+                                }
+
+                                #region Where to store results
+                                #region EventLog
+                                if ($PSBoundParameters.ContainsKey('WriteToEventLog')) {
+                                    $pesterEventParams = @{
+                                        PesterTestsResults = $pChecksResults
+                                        EventSource        = $EventSource
+                                        EventIDBase        = $EventIDBase
+                                    }
+                                    Write-Verbose -Message "Writing test results to Event Log {Application} with Event Source {$EventSource} and EventIDBase {$EventIDBase}"
+                                    Write-pChecksToEventLog @pesterEventParams
+                                }
+                                #endregion
+
+                                #region Azure Log Analytics
+                                if ($PSBoundParameters.ContainsKey('WriteToAzureLog')) {
+                                    $batchId = [System.Guid]::NewGuid()
+                                    $pesterALParams = @{
+                                        PesterTestsResults  = $pChecksResults
+                                        invocationStartTime = $invocationStartTime
+                                        invocationEndTime   = $invocationEndTime
+                                        Identifier          = $Identifier
+                                        BatchId             = $BatchId
+                                        CustomerId          = $CustomerId
+                                        SharedKey           = $SharedKey
+                                    }
+                                    Write-Verbose -Message "Writing test results to Azure Log CustomerID {$CustomerId} with BatchID {$BatchId} and Identifier {$Identifier}"
+                                    Write-pChecksToLogAnalytics @pesterALParams
+                                }
+                                #endregion
+                                Write-Verbose -Message "Pester File {$file} Processed type $($pCheckFiltered.TestTarget)"
+                            }
                         }
                     }
                 }
