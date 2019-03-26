@@ -22,7 +22,18 @@ function Invoke-pCheck {
         [string[]]
         $NodeName,
 
-        [Parameter(Mandatory = $false, HelpMessage = 'hashtable with Configuration',
+        [Parameter(Mandatory = $false, HelpMessage = 'Provide Credential',
+            ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [System.Management.Automation.Credential()][System.Management.Automation.PSCredential]
+        $Credential = [System.Management.Automation.PSCredential]::Empty,
+
+
+        [Parameter(Mandatory = $false, HelpMessage = 'hashtable with current Configuration',
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [hashtable]
+        $CurrentConfiguration,
+
+        [Parameter(Mandatory = $false, HelpMessage = 'hashtable with Pester Parameters',
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [hashtable]
         $pCheckParameters,
@@ -125,18 +136,16 @@ function Invoke-pCheck {
                         #endregion
                         if ($checksToProcess) {
                             foreach ($file in $checksToProcess) {
-                                #region get output file pester parameters
 
                                 $pesterParams.Script = @{
                                     Path       = $file
                                     Parameters = $pCheckParameters
                                 }
-
-
+                                #region get output file pester parameters
+                                $newpCheckFileNameSplat = @{
+                                    pCheckFile = $file
+                                }
                                 if ($PSBoundParameters.ContainsKey('OutputFolder')) {
-                                    $newpCheckFileNameSplat = @{
-                                        pCheckFile = $file
-                                    }
                                     $newpCheckFileNameSplat.OutputFolder = $OutputFolder
                                     if ($PSBoundParameters.ContainsKey('FilePrefix')) {
                                         $newpCheckFileNameSplat.FilePrefix = $FilePrefix
@@ -150,12 +159,13 @@ function Invoke-pCheck {
                                 if ($pCheckFiltered.TestTarget -eq 'General') {
                                     Write-Verbose "bede robil generala - {$file}"
                                     $newpCheckFileNameSplat.NodeName = 'General'
-                                    $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
-                                    Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.FilePrefix)}"
+                                    if ($PSBoundParameters.ContainsKey('OutputFolder')) {
+                                        $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
+                                        Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.OutputFile)}"
 
+                                    }
                                     #region Perform Tests
                                     $invocationStartTime = [DateTime]::UtcNow
-                                    $pesterParams
                                     #$pChecksResults = Invoke-Pester @pesterParams
                                     $invocationEndTime = [DateTime]::UtcNow
                                     #endregion
@@ -172,19 +182,21 @@ function Invoke-pCheck {
                                     }
                                     foreach ($node in $nodeToProcess) {
                                         Write-Verbose "Dla Noda $node"
-                                        $newpCheckFileNameSplat.NodeName = $node
-                                        $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
+                                        if ($PSBoundParameters.ContainsKey('OutputFolder')) {
+                                            $newpCheckFileNameSplat.NodeName = $node
+                                            $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
+                                            Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.OutputFile)}"
+
+                                        }
                                         $pCheckParametersTemporary = $pCheckParameters
                                         $pCheckParametersTemporary.ComputerName = $node
                                         $pesterParams.Script = @{
                                             Path       = $file
                                             Parameters = $pCheckParametersTemporary
                                         }
-                                        Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.FilePrefix)}"
 
                                         #region Perform Tests
                                         $invocationStartTime = [DateTime]::UtcNow
-                                        $pesterParams
                                         #$pChecksResults = Invoke-Pester @pesterParams
                                         $invocationEndTime = [DateTime]::UtcNow
                                         #endregion
