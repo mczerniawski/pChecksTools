@@ -17,7 +17,7 @@ function Invoke-pCheck {
         [string[]]
         $TestType = @('Simple', 'Comprehensive'),
 
-        [Parameter(Mandatory = $false, HelpMessage = 'Node to test')]
+        [Parameter(Mandatory = $true, HelpMessage = 'Node to test')]
         [ValidateNotNullOrEmpty()]
         [string[]]
         $NodeName,
@@ -27,16 +27,10 @@ function Invoke-pCheck {
         [System.Management.Automation.Credential()][System.Management.Automation.PSCredential]
         $Credential = [System.Management.Automation.PSCredential]::Empty,
 
-
         [Parameter(Mandatory = $false, HelpMessage = 'hashtable with current Configuration',
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [hashtable]
         $CurrentConfiguration,
-
-        [Parameter(Mandatory = $false, HelpMessage = 'hashtable with Pester Parameters',
-            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
-        [hashtable]
-        $pCheckParameters,
 
         [Parameter(Mandatory = $false,
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
@@ -139,13 +133,31 @@ function Invoke-pCheck {
 
                                 $pesterParams.Script = @{
                                     Path       = $file
-                                    Parameters = $pCheckParameters
+                                    Parameters = @{}
+                                }
+
+                                if ($pCheckFiltered.Parameters -contains 'Configuration') {
+                                    if($PSBoundParameters.ContainsKey('CurrentConfiguration')){
+                                        $pesterParams.Script.Parameters.Add('Configuration',$CurrentConfiguration)
+                                    }
+                                    else {
+                                        Write-Error -Message "Please provide Configuration for test {$file}"
+                                    }
+
+                                }
+                                if ($pCheckFiltered.Parameters -contains 'Credential') {
+                                    if($PSBoundParameters.ContainsKey('Credential')){
+                                        $pesterParams.Script.Parameters.Add('Credential',$Credential)
+                                    }
+                                    else {
+                                        Write-Error -Message "Please provide Credential for test {$file}"
+                                    }
                                 }
                                 #region get output file pester parameters
-                                $newpCheckFileNameSplat = @{
-                                    pCheckFile = $file
-                                }
                                 if ($PSBoundParameters.ContainsKey('OutputFolder')) {
+                                    $newpCheckFileNameSplat = @{
+                                        pCheckFile = $file
+                                    }
                                     $newpCheckFileNameSplat.OutputFolder = $OutputFolder
                                     if ($PSBoundParameters.ContainsKey('FilePrefix')) {
                                         $newpCheckFileNameSplat.FilePrefix = $FilePrefix
@@ -158,29 +170,24 @@ function Invoke-pCheck {
                                 #endregion
                                 if ($pCheckFiltered.TestTarget -eq 'General') {
                                     Write-Verbose "bede robil generala - {$file}"
-                                    $newpCheckFileNameSplat.NodeName = 'General'
                                     if ($PSBoundParameters.ContainsKey('OutputFolder')) {
+                                        $newpCheckFileNameSplat.NodeName = 'General'
                                         $pesterParams.OutputFile = New-pCheckFileName @newpCheckFileNameSplat
                                         Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.OutputFile)}"
 
                                     }
+                                    if ($pCheckFiltered.Parameters -contains 'ComputerName') {
+                                        $pesterParams.Script.Parameters.Add('ComputerName',$NodeName[0])
+                                    }
                                     #region Perform Tests
                                     $invocationStartTime = [DateTime]::UtcNow
-                                    #$pChecksResults = Invoke-Pester @pesterParams
+                                    $pChecksResults = Invoke-Pester @pesterParams
                                     $invocationEndTime = [DateTime]::UtcNow
                                     #endregion
-                                    #wygeneruj nazwe pliku,  wykonac test, zapisz
-
                                 }
                                 else {
                                     Write-Verbose "bede robil noda - {$file}"
-                                    if ($PSBoundParameters.ContainsKey('NodeName')) {
-                                        $nodeToProcess = $NodeName
-                                    }
-                                    else {
-                                        $nodeToProcess = 'WszystkieNody'
-                                    }
-                                    foreach ($node in $nodeToProcess) {
+                                    foreach ($node in $NodeName) {
                                         Write-Verbose "Dla Noda $node"
                                         if ($PSBoundParameters.ContainsKey('OutputFolder')) {
                                             $newpCheckFileNameSplat.NodeName = $node
@@ -188,16 +195,13 @@ function Invoke-pCheck {
                                             Write-Verbose -Message "Results for Pester file {$file} will be written to {$($pesterParams.OutputFile)}"
 
                                         }
-                                        $pCheckParametersTemporary = $pCheckParameters
-                                        $pCheckParametersTemporary.ComputerName = $node
-                                        $pesterParams.Script = @{
-                                            Path       = $file
-                                            Parameters = $pCheckParametersTemporary
+                                        if ($pCheckFiltered.Parameters -contains 'ComputerName') {
+                                              $pesterParams.Script.Parameters.ComputerName = $node
                                         }
 
                                         #region Perform Tests
                                         $invocationStartTime = [DateTime]::UtcNow
-                                        #$pChecksResults = Invoke-Pester @pesterParams
+                                        $pChecksResults = Invoke-Pester @pesterParams
                                         $invocationEndTime = [DateTime]::UtcNow
                                         #endregion
                                     }
