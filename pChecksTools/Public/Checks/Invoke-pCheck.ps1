@@ -51,6 +51,11 @@ function Invoke-pCheck {
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [switch]
         $WriteToAzureLog,
+        
+        [Parameter(Mandatory = $false, HelpMessage='Name for cheks to store in Azure Log ANalytics',
+        ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [string]
+        $Identifier,
 
         [Parameter(Mandatory = $false,
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]

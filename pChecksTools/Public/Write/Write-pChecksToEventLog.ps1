@@ -57,7 +57,7 @@
     try {
       if (-not [system.diagnostics.eventlog]::SourceExists($EventSource)) {
         [system.diagnostics.EventLog]::CreateEventSource($EventSource, 'Application')
-        Write-Verbose-Message "Created EventSource {$EventSource} in {Application} log. Information messages with EventID {$EventIDInfo}. Error messages with EventID {$EventIDError}"
+        Write-Verbose -Message "Created EventSource {$EventSource} in {Application} log. Information messages with EventID {$EventIDInfo}. Error messages with EventID {$EventIDError}"
       }
       foreach ($testResult in $PesterTestsResults.TestResult) {
         if ($testResult.Result -match 'Passed'){

@@ -1,42 +1,64 @@
 Function Export-LogAnalytics {
     [cmdletbinding()]
     Param(
-        $customerId,
-        $sharedKey,
-        $object,
-        $logType,
+
+        [Parameter(Mandatory = $true,
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [string]
+        $CustomerID,
+
+        [Parameter(Mandatory = $true,
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [string]
+        $SharedKey,
+
+        [Parameter(Mandatory = $true,
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateNotNullOrEmpty()]
+        [psobject]
+        $pChecksResults,
+
+        [Parameter(Mandatory = $true,
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateNotNullOrEmpty()]
+        $LogType,
+
+        [Parameter(Mandatory = $true,
+        ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+    [ValidateNotNullOrEmpty()]
         $TimeStampField
     )
-    $bodyAsJson = ConvertTo-Json $object
-    $body = [System.Text.Encoding]::UTF8.GetBytes($bodyAsJson)
+    process {
 
-    $method = "POST"
-    $contentType = "application/json"
-    $resource = "/api/logs"
-    $rfc1123date = [DateTime]::UtcNow.ToString("r")
-    $contentLength = $body.Length
+        $bodyAsJson = ConvertTo-Json $pChecksResults
+        $body = [System.Text.Encoding]::UTF8.GetBytes($bodyAsJson)
 
-    $signatureArguments = @{
-        CustomerId = $customerId
-        SharedKey = $sharedKey
-        Date = $rfc1123date
-        ContentLength = $contentLength
-        Method = $method
-        ContentType = $contentType
-        Resource = $resource
+        $method = 'POST'
+        $resource = '/api/logs'
+        $rfc1123date = [DateTime]::UtcNow.ToString("r")
+        $contentType = 'application/json'
+
+        $getLogAnalyticsSignatureSplat = @{
+            CustomerID    = $CustomerID
+            SharedKey     = $SharedKey
+            Date          = $rfc1123date
+            ContentLength = $body.Length
+            Method        = $method
+            ContentType   = $contentType
+            Resource      = $resource
+        }
+        $signature = Get-LogAnalyticsSignature @getLogAnalyticsSignatureSplat
+
+        $uri = "https://" + $CustomerID + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+
+        $headers = @{
+            "Authorization"        = $signature;
+            "Log-Type"             = $LogType;
+            "x-ms-date"            = $rfc1123date;
+            "time-generated-field" = $TimeStampField;
+        }
+
+        $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $contentType -Headers $headers -Body $body -UseBasicParsing
+        $response.StatusCode
     }
-
-    $signature = Get-LogAnalyticsSignature @signatureArguments
-    
-    $uri = "https://" + $customerId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-
-    $headers = @{
-        "Authorization" = $signature;
-        "Log-Type" = $logType;
-        "x-ms-date" = $rfc1123date;
-        "time-generated-field" = $TimeStampField;
-    }
-
-    $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $contentType -Headers $headers -Body $body -UseBasicParsing
-    return $response.StatusCode
 }
