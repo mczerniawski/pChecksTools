@@ -25,6 +25,11 @@ Function Write-pChecksToLogAnalytics {
         $SharedKey,
 
         [Parameter(Mandatory = $true,
+        ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [string]
+        $Target,
+
+        [Parameter(Mandatory = $true,
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [ValidateNotNullOrEmpty()]
         [psobject]
@@ -44,14 +49,14 @@ Function Write-pChecksToLogAnalytics {
 
     if ($PesterTestsResults.TestResult.Count -gt 0) {
         $pChecksResults = @()
-        foreach ($testResult in $PesterTestsResults.TestResult) {
-            $pChecksResults += [PSCustomObject]@{
+        $pChecksResults = foreach ($testResult in $PesterTestsResults.TestResult) {
+            [PSCustomObject]@{
                 BatchId             = $batchId
                 InvocationId        = [System.Guid]::NewGuid()
                 InvocationStartTime = $invocationStartTime
                 InvocationEndTime   = $invocationEndTime
                 HostComputer        = $env:computername
-                Target              = $config.ServerInstance
+                Target              = $Target
                 TimeTaken           = $testResult.Time.TotalMilliseconds
                 Passed              = $testResult.Passed
                 Describe            = $testResult.Describe
@@ -62,16 +67,19 @@ Function Write-pChecksToLogAnalytics {
                 Identifier          = $Identifier
             }
         }
-
         $exportArguments = @{
             CustomerId     = $CustomerId
             SharedKey      = $SharedKey
-            LogType        = "PesterResult"
-            TimeStampField = "InvocationStartTime"
+            LogType        = $Identifier
+            TimeStampField = $invocationStartTime
+            pChecksResults = $pChecksResults
         }
 
-        Write-Verbose "Exporting $($pChecksResults.Count) results"
-        Export-LogAnalytics @exportArguments $pChecksResults
+        Write-Verbose "Exporting $($pChecksResults.Count) results to Azure Log Analytics"
+        $result = Export-LogAnalytics @exportArguments
+        if($result -ne 200){
+            Write-Error -Message "Something went wrong wirh exporting to Azure Log - {$($result.ErrorCode)}"
+        }
     }
     else {
         Write-Verbose "No test results"

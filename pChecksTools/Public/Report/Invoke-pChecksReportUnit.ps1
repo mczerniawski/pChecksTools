@@ -44,7 +44,7 @@ function Invoke-pChecksReportUnit {
        Write-Verbose -Message "ReportUnit executable found in path {$ReportUnitPath}"
    }
    else {
-       $reportUnitExecutable = "$PSScriptRoot\..\bin\ReportUnit\ReportUnit.exe"
+       $reportUnitExecutable = "$PSScriptRoot\..\..\bin\ReportUnit\ReportUnit.exe"
        Write-Verbose -Message "ReportUnit executable found in module path {$reportUnitExecutable}"
    }
    if(-not($PSBoundParameters.ContainsKey('OutputFolder'))){

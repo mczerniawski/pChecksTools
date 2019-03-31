@@ -51,9 +51,9 @@ function Invoke-pCheck {
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [switch]
         $WriteToAzureLog,
-        
-        [Parameter(Mandatory = $false, HelpMessage='Name for cheks to store in Azure Log ANalytics',
-        ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Name for checks to store in Azure Log Analytics',
+            ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [string]
         $Identifier,
 
@@ -140,10 +140,13 @@ function Invoke-pCheck {
                                     Path       = $file
                                     Parameters = @{}
                                 }
+                                if ($PSBoundParameters.ContainsKey('Tag')) {
+                                    $pesterParams.Tag = $Tag
+                                }
 
                                 if ($pCheckFiltered.Parameters -contains 'Configuration') {
-                                    if($PSBoundParameters.ContainsKey('CurrentConfiguration')){
-                                        $pesterParams.Script.Parameters.Add('Configuration',$CurrentConfiguration)
+                                    if ($PSBoundParameters.ContainsKey('CurrentConfiguration')) {
+                                        $pesterParams.Script.Parameters.Add('Configuration', $CurrentConfiguration)
                                     }
                                     else {
                                         Write-Error -Message "Please provide Configuration for test {$file}"
@@ -151,8 +154,8 @@ function Invoke-pCheck {
 
                                 }
                                 if ($pCheckFiltered.Parameters -contains 'Credential') {
-                                    if($PSBoundParameters.ContainsKey('Credential')){
-                                        $pesterParams.Script.Parameters.Add('Credential',$Credential)
+                                    if ($PSBoundParameters.ContainsKey('Credential')) {
+                                        $pesterParams.Script.Parameters.Add('Credential', $Credential)
                                     }
                                     else {
                                         Write-Error -Message "Please provide Credential for test {$file}"
@@ -182,12 +185,45 @@ function Invoke-pCheck {
 
                                     }
                                     if ($pCheckFiltered.Parameters -contains 'ComputerName') {
-                                        $pesterParams.Script.Parameters.Add('ComputerName',$NodeName[0])
+                                        $pesterParams.Script.Parameters.Add('ComputerName', $NodeName[0])
                                     }
                                     #region Perform Tests
                                     $invocationStartTime = [DateTime]::UtcNow
                                     $pChecksResults = Invoke-Pester @pesterParams
                                     $invocationEndTime = [DateTime]::UtcNow
+                                    #endregion
+
+
+                                    #region Where to store results
+                                    #region EventLog
+                                    if ($PSBoundParameters.ContainsKey('WriteToEventLog')) {
+                                        $pesterEventParams = @{
+                                            PesterTestsResults = $pChecksResults
+                                            EventSource        = $EventSource
+                                            EventIDBase        = $EventIDBase
+                                        }
+                                        Write-Verbose -Message "Writing test results to Event Log {Application} with Event Source {$EventSource} and EventIDBase {$EventIDBase}"
+                                        Write-pChecksToEventLog @pesterEventParams
+                                    }
+                                    #endregion
+
+                                    #region Azure Log Analytics
+                                    if ($PSBoundParameters.ContainsKey('WriteToAzureLog')) {
+                                        $batchId = [System.Guid]::NewGuid()
+                                        $pesterALParams = @{
+                                            PesterTestsResults  = $pChecksResults
+                                            invocationStartTime = $invocationStartTime
+                                            invocationEndTime   = $invocationEndTime
+                                            Identifier          = $Identifier
+                                            BatchId             = $BatchId
+                                            CustomerId          = $CustomerId
+                                            SharedKey           = $SharedKey
+                                            Target              = 'General'
+                                        }
+                                        Write-Verbose -Message "Writing test results to Azure Log CustomerID {$CustomerId} with BatchID {$BatchId} and Identifier {$Identifier}"
+                                        Write-pChecksToLogAnalytics @pesterALParams
+                                    }
+                                    #endregion
                                     #endregion
                                 }
                                 else {
@@ -201,7 +237,7 @@ function Invoke-pCheck {
 
                                         }
                                         if ($pCheckFiltered.Parameters -contains 'ComputerName') {
-                                              $pesterParams.Script.Parameters.ComputerName = $node
+                                            $pesterParams.Script.Parameters.ComputerName = $node
                                         }
 
                                         #region Perform Tests
@@ -209,38 +245,42 @@ function Invoke-pCheck {
                                         $pChecksResults = Invoke-Pester @pesterParams
                                         $invocationEndTime = [DateTime]::UtcNow
                                         #endregion
+
+
+                                        #region Where to store results
+                                        #region EventLog
+                                        if ($PSBoundParameters.ContainsKey('WriteToEventLog')) {
+                                            $pesterEventParams = @{
+                                                PesterTestsResults = $pChecksResults
+                                                EventSource        = $EventSource
+                                                EventIDBase        = $EventIDBase
+                                            }
+                                            Write-Verbose -Message "Writing test results to Event Log {Application} with Event Source {$EventSource} and EventIDBase {$EventIDBase}"
+                                            Write-pChecksToEventLog @pesterEventParams
+                                        }
+                                        #endregion
+
+                                        #region Azure Log Analytics
+                                        if ($PSBoundParameters.ContainsKey('WriteToAzureLog')) {
+                                            $batchId = [System.Guid]::NewGuid()
+                                            $pesterALParams = @{
+                                                PesterTestsResults  = $pChecksResults
+                                                invocationStartTime = $invocationStartTime
+                                                invocationEndTime   = $invocationEndTime
+                                                Identifier          = $Identifier
+                                                BatchId             = $BatchId
+                                                CustomerId          = $CustomerId
+                                                SharedKey           = $SharedKey
+                                                Target              = $node
+                                            }
+                                            Write-Verbose -Message "Writing test results to Azure Log CustomerID {$CustomerId} with BatchID {$BatchId} and Identifier {$Identifier}"
+                                            Write-pChecksToLogAnalytics @pesterALParams
+                                        }
+                                        #endregion
+                                        #endregion
                                     }
                                 }
 
-                                #region Where to store results
-                                #region EventLog
-                                if ($PSBoundParameters.ContainsKey('WriteToEventLog')) {
-                                    $pesterEventParams = @{
-                                        PesterTestsResults = $pChecksResults
-                                        EventSource        = $EventSource
-                                        EventIDBase        = $EventIDBase
-                                    }
-                                    Write-Verbose -Message "Writing test results to Event Log {Application} with Event Source {$EventSource} and EventIDBase {$EventIDBase}"
-                                    Write-pChecksToEventLog @pesterEventParams
-                                }
-                                #endregion
-
-                                #region Azure Log Analytics
-                                if ($PSBoundParameters.ContainsKey('WriteToAzureLog')) {
-                                    $batchId = [System.Guid]::NewGuid()
-                                    $pesterALParams = @{
-                                        PesterTestsResults  = $pChecksResults
-                                        invocationStartTime = $invocationStartTime
-                                        invocationEndTime   = $invocationEndTime
-                                        Identifier          = $Identifier
-                                        BatchId             = $BatchId
-                                        CustomerId          = $CustomerId
-                                        SharedKey           = $SharedKey
-                                    }
-                                    Write-Verbose -Message "Writing test results to Azure Log CustomerID {$CustomerId} with BatchID {$BatchId} and Identifier {$Identifier}"
-                                    Write-pChecksToLogAnalytics @pesterALParams
-                                }
-                                #endregion
                                 Write-Verbose -Message "Pester File {$file} Processed type $($pCheckFiltered.TestTarget)"
                             }
                         }

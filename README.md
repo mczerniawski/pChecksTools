@@ -2,4 +2,4 @@
 
 Shared tools for other baseline modules used to create infra-as-code documentation
 
-Authored by 
+Authored by Mateusz Czerniawski

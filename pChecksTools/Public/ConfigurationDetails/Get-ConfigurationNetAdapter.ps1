@@ -21,11 +21,6 @@ function Get-ConfigurationNetAdapter {
     [System.Management.Automation.PSCredential]
     $Credential,
 
-    [Parameter(Mandatory=$false,
-    ParameterSetName='ComputerName')]
-    [string]
-    $ConfigurationName,
-
     [Parameter(Mandatory,
     ParameterSetName='PSCustomSession')]
     [System.Management.Automation.Runspaces.PSSession]

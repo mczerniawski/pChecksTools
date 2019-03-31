@@ -30,7 +30,6 @@
       Accepts PesterResults from Invoke-Pester -passThru
   #>
   [CmdletBinding()]
-  [OutputType([Void])]
   param
   (
     [Parameter(Mandatory=$false,
@@ -56,6 +55,7 @@
   process{
     try {
       if (-not [system.diagnostics.eventlog]::SourceExists($EventSource)) {
+        Write-Verbose -Message "EventSource {$EventSource} does not exists. Will attempt to create!"
         [system.diagnostics.EventLog]::CreateEventSource($EventSource, 'Application')
         Write-Verbose -Message "Created EventSource {$EventSource} in {Application} log. Information messages with EventID {$EventIDInfo}. Error messages with EventID {$EventIDError}"
       }
@@ -85,7 +85,7 @@
       }
     }
     catch [System.Security.SecurityException],[Microsoft.PowerShell.Commands.WriteEventLogCommand]{
-      Write-Log -Error -Message "You don't have permissions to access eventlogs. Unable to create EventSource {$EventSource}"
+      Write-Log -Error -Message "You don't have permissions to create eventlogs sources. Unable to create EventSource {$EventSource}"
     }
     catch {
       $_

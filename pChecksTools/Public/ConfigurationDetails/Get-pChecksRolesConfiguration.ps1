@@ -1,33 +1,28 @@
-function Get-POVFRolesConfiguration {
+function Get-pChecksRolesConfiguration {
     [CmdletBinding()]
     param (
-      
+
       [Parameter(Mandatory,
       ParameterSetName='ComputerName')]
       [ValidateNotNullOrEmpty()]
       [System.String]
       $ComputerName,
-      
+
       [Parameter(Mandatory=$false,
       ParameterSetName='ComputerName')]
       [System.Management.Automation.PSCredential]
       $Credential,
-      
-      [Parameter(Mandatory=$false,
-      ParameterSetName='ComputerName')]
-      [string]
-      $ConfigurationName,
-    
+
       [Parameter(Mandatory,
       ParameterSetName='PSCustomSession')]
       [System.Management.Automation.Runspaces.PSSession]
       $PSSession
-    
-    
+
+
     )
     process{
       #region Variables set
-      if($PSBoundParameters.ContainsKey('ComputerName')) { 
+      if($PSBoundParameters.ContainsKey('ComputerName')) {
         $sessionParams = @{
           ComputerName = $ComputerName
           SessionName = "POVF-$ComputerName"
@@ -43,18 +38,18 @@ function Get-POVFRolesConfiguration {
       if($PSBoundParameters.ContainsKey('PSSession')){
         $POVFPSSession = $PSSession
       }
-    
+
       #endregion
       $hostRolesConfiguration = Invoke-Command -session $POVFPSSession -scriptBlock {
-        Get-WindowsFeature  
+        Get-WindowsFeature
       }
       @{
         Present =@($hostRolesConfiguration | Where-Object {$PSItem.InstallState -eq 'Installed'} | Select-Object -ExpandProperty Name)
         Absent = @($hostRolesConfiguration | Where-Object {$PSItem.InstallState -eq 'Removed'} | Select-Object -ExpandProperty Name)
       }
-    
+
       if(-not ($PSBoundParameters.ContainsKey('PSSession'))){
-        Remove-PSSession -Name $POVFPSSession.Name -ErrorAction SilentlyContinue  
+        Remove-PSSession -Name $POVFPSSession.Name -ErrorAction SilentlyContinue
       }
     }
   }

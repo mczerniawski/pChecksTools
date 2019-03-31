@@ -15,7 +15,7 @@ Function Export-LogAnalytics {
         [Parameter(Mandatory = $true,
             ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
         [ValidateNotNullOrEmpty()]
-        [psobject]
+        [psobject[]]
         $pChecksResults,
 
         [Parameter(Mandatory = $true,
@@ -25,14 +25,12 @@ Function Export-LogAnalytics {
 
         [Parameter(Mandatory = $true,
         ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
-    [ValidateNotNullOrEmpty()]
+        [ValidateNotNullOrEmpty()]
         $TimeStampField
     )
     process {
-
         $bodyAsJson = ConvertTo-Json $pChecksResults
         $body = [System.Text.Encoding]::UTF8.GetBytes($bodyAsJson)
-
         $method = 'POST'
         $resource = '/api/logs'
         $rfc1123date = [DateTime]::UtcNow.ToString("r")
@@ -49,7 +47,7 @@ Function Export-LogAnalytics {
         }
         $signature = Get-LogAnalyticsSignature @getLogAnalyticsSignatureSplat
 
-        $uri = "https://" + $CustomerID + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+        $uri = "https://{0}.ods.opinsights.azure.com{1}?api-version=2016-04-01" -f $CustomerID, $resource
 
         $headers = @{
             "Authorization"        = $signature;
@@ -58,7 +56,15 @@ Function Export-LogAnalytics {
             "time-generated-field" = $TimeStampField;
         }
 
-        $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $contentType -Headers $headers -Body $body -UseBasicParsing
+        $invokeWebRequestSplat = @{
+            ContentType = $contentType
+            Method = $method
+            UseBasicParsing = $true
+            Uri = $uri
+            Headers = $headers
+            Body = $body
+        }
+        $response = Invoke-WebRequest @invokeWebRequestSplat
         $response.StatusCode
     }
 }

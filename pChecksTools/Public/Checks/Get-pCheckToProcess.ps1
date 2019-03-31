@@ -16,8 +16,5 @@ function Get-pCheckToProcess {
         foreach ($check in $pCheckObject) {
             Get-ChildItem -Path $pChecksFolderPath -Filter $check.DiagnosticFile -Recurse | Select-Object -ExpandProperty FullName
         }
-        #endregion
-
     }
-
 }

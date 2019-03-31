@@ -1,4 +1,4 @@
-function Get-pCheckByTag {
+function Get-pCheckByNode {
     [CmdletBinding()]
     param
     (
