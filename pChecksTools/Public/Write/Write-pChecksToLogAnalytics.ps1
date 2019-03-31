@@ -2,6 +2,7 @@
 Function Write-pChecksToLogAnalytics {
     #TODO
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '')]
     param
     (
         [Parameter(Mandatory = $false,

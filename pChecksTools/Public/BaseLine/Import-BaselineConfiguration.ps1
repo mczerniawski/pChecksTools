@@ -1,5 +1,6 @@
 function Import-BaselineConfiguration {
     [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateScript( {Test-Path -Path $PSItem -PathType Container})]

@@ -1,5 +1,7 @@
 function New-pCheckFileName {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
+    
     param
     (
         [Parameter(Mandatory = $True, HelpMessage = 'File name',

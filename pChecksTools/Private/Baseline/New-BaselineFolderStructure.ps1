@@ -1,5 +1,6 @@
 function New-BaselineFolderStructure {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
     param(
         [Parameter(Mandatory = $true)]
         [System.String]

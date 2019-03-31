@@ -1,5 +1,6 @@
 function Get-pChecksRolesConfiguration {
     [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
     param (
 
       [Parameter(Mandatory,
@@ -25,7 +26,7 @@ function Get-pChecksRolesConfiguration {
       if($PSBoundParameters.ContainsKey('ComputerName')) {
         $sessionParams = @{
           ComputerName = $ComputerName
-          SessionName = "POVF-$ComputerName"
+          SessionName = "pChecks-$ComputerName"
         }
         if($PSBoundParameters.ContainsKey('ConfigurationName')){
           $sessionParams.ConfigurationName = $ConfigurationName
@@ -33,14 +34,14 @@ function Get-pChecksRolesConfiguration {
         if($PSBoundParameters.ContainsKey('Credential')){
           $sessionParams.Credential = $Credential
         }
-        $POVFPSSession = New-PSSessionCustom @SessionParams
+        $pChecksPSSession = New-PSSession @SessionParams
       }
       if($PSBoundParameters.ContainsKey('PSSession')){
-        $POVFPSSession = $PSSession
+        $pChecksPSSession = $PSSession
       }
 
       #endregion
-      $hostRolesConfiguration = Invoke-Command -session $POVFPSSession -scriptBlock {
+      $hostRolesConfiguration = Invoke-Command -session $pChecksPSSession -scriptBlock {
         Get-WindowsFeature
       }
       @{
@@ -49,7 +50,7 @@ function Get-pChecksRolesConfiguration {
       }
 
       if(-not ($PSBoundParameters.ContainsKey('PSSession'))){
-        Remove-PSSession -Name $POVFPSSession.Name -ErrorAction SilentlyContinue
+        Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
       }
     }
   }

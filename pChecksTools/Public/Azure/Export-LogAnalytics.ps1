@@ -1,5 +1,6 @@
 Function Export-LogAnalytics {
     [cmdletbinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '')]
     Param(
 
         [Parameter(Mandatory = $true,
