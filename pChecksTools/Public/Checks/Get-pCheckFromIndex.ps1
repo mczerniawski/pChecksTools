@@ -7,6 +7,6 @@ function Get-pCheckFromIndex {
         $pChecksIndexFilePath
     )
     process {
-        Get-ConfigurationData -ConfigurationPath $pChecksIndexFilePath -OutputType PSObject | Select-Object -ExpandProperty Checks
+        Get-pChecksConfigurationData -ConfigurationPath $pChecksIndexFilePath -OutputType PSObject | Select-Object -ExpandProperty Checks
     }
 }

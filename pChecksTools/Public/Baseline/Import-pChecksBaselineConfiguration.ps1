@@ -1,4 +1,4 @@
-function Import-BaselineConfiguration {
+function Import-pChecksBaselineConfiguration {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     param(
@@ -15,11 +15,11 @@ function Import-BaselineConfiguration {
         }
 
         #region Get Service Configuration Data (i.e. your DHCP global configuration)
-        $BaselineConfiguration.General = Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'General') -OutputType HashTable
+        $BaselineConfiguration.General = Get-pChecksConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'General') -OutputType HashTable
         #endregion
 
         #region Get Service Nodes Configuration Data (i.e. your DHCP servers specific configuration)
-        $BaselineConfiguration.Nodes += Get-ConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'Nodes') -OutputType HashTable
+        $BaselineConfiguration.Nodes += Get-pChecksConfigurationData -ConfigurationPath (Join-Path -Path $BaselineConfigurationFolder -ChildPath 'Nodes') -OutputType HashTable
         #endregion
 
         $BaselineConfiguration

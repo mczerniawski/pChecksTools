@@ -1,7 +1,7 @@
-function Get-ConfigurationData {
+function Get-pChecksConfigurationData {
   <#
       .SYNOPSIS
-      Get-ConfigurationData will retrieve configuratin depending on the input
+      Get-pChecksConfigurationData will retrieve configuratin depending on the input
 
       .DESCRIPTION
       Currently JSON (.json) and PowerShell Data (.psd1) are supported.
@@ -13,15 +13,15 @@ function Get-ConfigurationData {
       Path to JSON or psd1 file
 
       .EXAMPLE
-      Get-ConfigurationData -ConfigurationPath C:\SomePath\Config.json -OutputType Hashtable
+      Get-pChecksConfigurationData -ConfigurationPath C:\SomePath\Config.json -OutputType Hashtable
       Will read content of Config.json file and convert it to a HashTable.
 
       .EXAMPLE
-      Get-ConfigurationData -ConfigurationPath C:\SomePath\Config.json -OutputType PSObject
+      Get-pChecksConfigurationData -ConfigurationPath C:\SomePath\Config.json -OutputType PSObject
       Will read content of Config.json file and convert it to a PS Object.
 
       .EXAMPLE
-      Get-ConfigurationData -ConfigurationPath C:\SomePath\Config.psd1
+      Get-pChecksConfigurationData -ConfigurationPath C:\SomePath\Config.psd1
       Will read content of Config.psd1 file and return it as a HashTable.
 
       .INPUTS

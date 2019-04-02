@@ -1,4 +1,4 @@
-function New-BaselineFolderStructure {
+function New-pChecksBaselineFolderStructure {
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
     param(

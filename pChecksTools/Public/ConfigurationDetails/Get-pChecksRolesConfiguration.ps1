@@ -15,7 +15,7 @@ function Get-pChecksRolesConfiguration {
       $Credential,
 
       [Parameter(Mandatory,
-      ParameterSetName='PSCustomSession')]
+      ParameterSetName='PSSession')]
       [System.Management.Automation.Runspaces.PSSession]
       $PSSession
 
@@ -27,9 +27,6 @@ function Get-pChecksRolesConfiguration {
         $sessionParams = @{
           ComputerName = $ComputerName
           SessionName = "pChecks-$ComputerName"
-        }
-        if($PSBoundParameters.ContainsKey('ConfigurationName')){
-          $sessionParams.ConfigurationName = $ConfigurationName
         }
         if($PSBoundParameters.ContainsKey('Credential')){
           $sessionParams.Credential = $Credential

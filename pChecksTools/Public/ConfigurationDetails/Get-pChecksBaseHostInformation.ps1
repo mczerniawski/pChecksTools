@@ -11,29 +11,36 @@ function Get-pChecksBaseHostInformation {
         [Parameter(Mandatory = $false,
             ParameterSetName = 'ComputerName')]
         [System.Management.Automation.PSCredential]
-        $Credential
+        $Credential,
+
+        [Parameter(Mandatory,
+            ParameterSetName = 'PSSession')]
+        [System.Management.Automation.Runspaces.PSSession]
+        $PSSession
     )
     process {
         #region Variables set
         if ($PSBoundParameters.ContainsKey('ComputerName')) {
             $sessionParams = @{
                 ComputerName = $ComputerName
-                SessionName  = "Baseline-$ComputerName"
+                SessionName  = "pChecks-$ComputerName"
             }
             if ($PSBoundParameters.ContainsKey('Credential')) {
                 $sessionParams.Credential = $Credential
             }
-            $BaselinePSSession = New-PSSession @SessionParams
+            $pChecksPSSession = New-PSSession @SessionParams
         }
-
+        if ($PSBoundParameters.ContainsKey('PSSession')) {
+            $pChecksPSSession = $PSSession
+        }
         #endregion
-        $hostProperties = Invoke-Command -session $BaselinePSSession -scriptBlock {
+        $hostProperties = Invoke-Command -session $pChecksPSSession -scriptBlock {
             @{
                 ComputerName = $ENV:ComputerName
                 Domain       = $env:USERDNSDOMAIN
             }
         }
-        $cluster = Invoke-Command -session $BaselinePSSession -scriptBlock {
+        $cluster = Invoke-Command -session $pChecksPSSession -scriptBlock {
             if (Get-Command Get-Cluster -ErrorAction SilentlyContinue) {
                 Get-Cluster -ErrorAction SilentlyContinue
             }
@@ -49,6 +56,9 @@ function Get-pChecksBaseHostInformation {
             $result.Cluster = $cluster.Name
         }
         $result
-        Remove-PSSession -Name $BaselinePSSession.Name -ErrorAction SilentlyContinue
+        
+        if(-not ($PSBoundParameters.ContainsKey('PSSession'))){
+            Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
+        }
     }
 }

@@ -19,7 +19,12 @@ function Get-pChecksNetIPConfiguration {
         [Parameter(Mandatory = $false,
             ParameterSetName = 'ComputerName')]
         [System.Management.Automation.PSCredential]
-        $Credential
+        $Credential,
+
+      [Parameter(Mandatory,
+      ParameterSetName='PSSession')]
+      [System.Management.Automation.Runspaces.PSSession]
+      $PSSession
     )
     process {
         #region Variables set
@@ -33,7 +38,9 @@ function Get-pChecksNetIPConfiguration {
             }
             $pChecksPSSession = New-PSSession @SessionParams
         }
-
+        if ($PSBoundParameters.ContainsKey('PSSession')) {
+            $pChecksPSSession = $PSSession
+        }
         $interfaceParams = @{
             InterfaceAlias = '*'
         }
@@ -80,6 +87,8 @@ function Get-pChecksNetIPConfiguration {
                 }
             }
         }
-        Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
+        if(-not ($PSBoundParameters.ContainsKey('PSSession'))){
+            Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
+        }
     }
 }

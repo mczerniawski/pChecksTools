@@ -1,6 +1,5 @@
-function Get-pChecksConfigurationNetAdapter {
+function Get-pChecksNetAdapterConfiguration {
     [CmdletBinding()]
-    [OutputType([ordered])]
     param (
 
         [Parameter(Mandatory = $false)]
@@ -20,7 +19,12 @@ function Get-pChecksConfigurationNetAdapter {
         [Parameter(Mandatory = $false,
             ParameterSetName = 'ComputerName')]
         [System.Management.Automation.PSCredential]
-        $Credential
+        $Credential,
+
+        [Parameter(Mandatory,
+            ParameterSetName = 'PSSession')]
+        [System.Management.Automation.Runspaces.PSSession]
+        $PSSession
 
     )
     process {
@@ -34,6 +38,9 @@ function Get-pChecksConfigurationNetAdapter {
                 $sessionParams.Credential = $Credential
             }
             $pChecksPSSession = New-PSSession @SessionParams
+        }
+        if ($PSBoundParameters.ContainsKey('PSSession')) {
+            $pChecksPSSession = $PSSession
         }
         $interfaceParams = @{
             InterfaceAlias = '*'
@@ -147,8 +154,8 @@ function Get-pChecksConfigurationNetAdapter {
                 $interfaceProperties
             }
         }
-
-        Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
-
+        if(-not ($PSBoundParameters.ContainsKey('PSSession'))){
+            Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
+        }
     }
 }

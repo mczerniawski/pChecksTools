@@ -1,6 +1,6 @@
 function Get-pChecksTeamingConfiguration {
     [CmdletBinding()]
-    [OutputType([ordered])]
+    [OutputType([System.Collections.Hashtable])]
     param (
 
         [Parameter(Mandatory,
@@ -12,7 +12,12 @@ function Get-pChecksTeamingConfiguration {
         [Parameter(Mandatory = $false,
             ParameterSetName = 'ComputerName')]
         [System.Management.Automation.PSCredential]
-        $Credential
+        $Credential,
+
+        [Parameter(Mandatory,
+            ParameterSetName = 'PSSession')]
+        [System.Management.Automation.Runspaces.PSSession]
+        $PSSession
     )
     process {
         #region Variables set
@@ -21,11 +26,13 @@ function Get-pChecksTeamingConfiguration {
                 ComputerName = $ComputerName
                 SessionName  = "pChecks-$ComputerName"
             }
-
             if ($PSBoundParameters.ContainsKey('Credential')) {
                 $sessionParams.Credential = $Credential
             }
             $pChecksPSSession = New-PSSession @SessionParams
+        }
+        if ($PSBoundParameters.ContainsKey('PSSession')) {
+            $pChecksPSSession = $PSSession
         }
 
         #endregion
@@ -49,9 +56,8 @@ function Get-pChecksTeamingConfiguration {
                 Members                = @($hostTeam.Members)
             }
         }
-
-
-        Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
-
+        if(-not $PSBoundParameters.ContainsKey('PSSession')) {
+            Remove-PSSession -Name $pChecksPSSession.Name -ErrorAction SilentlyContinue
+        }
     }
 }
